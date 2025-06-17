@@ -2,7 +2,7 @@ import logging
 import sys
 import os
 import telegram.constants
-from telegram import Update
+from telegram import Update, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 from telegram.constants import ParseMode
 
@@ -97,8 +97,20 @@ def read_token_from_file():
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text('Привет! Я твой бот. Отправь мне файл, фото, аудио или видео, и я сохраню его.')
+    # Отправляем приветствие и кнопку "Начать"
+    welcome_text = "Привет! Нажми кнопку ниже, чтобы начать."
+    reply_markup = ReplyKeyboardMarkup([["/start"]], resize_keyboard=True, one_time_keyboard=True)
 
+    await update.message.reply_text(
+        welcome_text,
+        reply_markup=reply_markup
+    )
+
+    # Убираем клавиатуру после нажатия (если нужно)
+    await update.message.reply_text(
+        "Теперь ты можешь общаться с ботом!",
+        reply_markup=ReplyKeyboardRemove()
+    )
 
 async def getme(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
