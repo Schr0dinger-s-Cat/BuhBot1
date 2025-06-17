@@ -1,9 +1,8 @@
 import logging
 import sys
-
 import telegram.constants
 from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 from telegram.constants import ParseMode
 
 
@@ -15,6 +14,79 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Функция обработки прикрепленных документов
+
+async def handle_document(update: Update, context):
+    try:
+        # Получаем информацию о файле
+        document = update.message.document
+        file = await document.get_file()
+
+        # Скачиваем файл
+        file_bytes = await file.download_as_bytes()
+
+        # Сохраняем файл
+        file_name = document.file_name
+        save_path = f'путь/к/папке/{file_name}'
+        with open(save_path, 'wb') as f:
+            f.write(file_bytes)
+
+        await update.message.reply_text("Документ успешно сохранен")
+
+    except Exception as e:
+        await update.message.reply_text(f"Произошла ошибка: {str(e)}")
+
+# Функция обработки прикрепленных фото
+
+async def handle_photo(update: Update, context):
+    try:
+        # Получаем файл с максимальным разрешением
+        photo = update.message.photo[-1]
+        file = await photo.get_file()
+
+        # Скачиваем файл
+        file_bytes = await file.download_as_bytes()
+
+        # Сохраняем файл
+        file_name = f'photo_{photo.file_id}.jpg'
+        save_path = f'путь/к/папке/{file_name}'
+        with open(save_path, 'wb') as f:
+            f.write(file_bytes)
+
+        await update.message.reply_text("Фотография успешно сохранена")
+
+    except Exception as e:
+        await update.message.reply_text(f"Произошла ошибка: {str(e)}")
+
+# Обработка прикрепленных аудио, видео, голосовых сообщений
+
+async def handle_media(update: Update, context):
+    try:
+        # Определяем тип файла
+        if update.message.audio:
+            media = update.message.audio
+        elif update.message.video:
+            media = update.message.video
+        elif update.message.voice:
+            media = update.message.voice
+        else:
+            await update.message.reply_text("Неподдерживаемый тип файла")
+        return
+
+        # Получаем файл
+        file = await media.get_file()
+        file_bytes = await file.download_as_bytes()
+
+        # Сохраняем файл
+        file_name = media.file_name or f'{media.file_id}.{media.mime_type.split("/")[-1]}'
+        save_path = f'путь/к/папке/{file_name}'
+        with open(save_path, 'wb') as f:
+            f.write(file_bytes)
+
+        await update.message.reply_text("Медиафайл успешно сохранен")
+
+    except Exception as e:
+        await update.message.reply_text(f"Произошла ошибка: {str(e)}")
 
 def read_token_from_file():
     try:
@@ -80,11 +152,6 @@ async def getme(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"Произошла ошибка: {str(e)}")
 
 
-
-
-
-
-
 def main():
     token = read_token_from_file()
     if not token:
@@ -97,6 +164,12 @@ def main():
         # Добавляем обработчики
         application.add_handler(CommandHandler('start', start))
         application.add_handler(CommandHandler('getme', getme))
+        application.add_handler(MessageHandler(filters.Document, handle_document))
+        application.add_handler(MessageHandler(filters.Photo, handle_photo))
+        application.add_handler(MessageHandler(filters.Audio, handle_media))
+        application.add_handler(MessageHandler(filters.Video, handle_media))
+        application.add_handler(MessageHandler(filters.Voice, handle_media))
+
         # Запускаем бота
         application.run_polling()
 
