@@ -1,10 +1,10 @@
 import logging
 import sys
+import os
 import telegram.constants
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 from telegram.constants import ParseMode
-
 
 # Настройка логгера
 logging.basicConfig(
@@ -14,79 +14,78 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Функция обработки прикрепленных документов
+# Создаем папку для файлов, если её нет
+if not os.path.exists('dwfiles'):
+    os.makedirs('dwfiles')
+
 
 async def handle_document(update: Update, context):
     try:
-        # Получаем информацию о файле
         document = update.message.document
         file = await document.get_file()
+        file_bytes = await file.download_as_bytearray()
 
-        # Скачиваем файл
-        file_bytes = await file.download_as_bytes()
-
-        # Сохраняем файл
         file_name = document.file_name
-        save_path = f'путь/к/папке/{file_name}'
+        save_path = f'dwfiles/{file_name}'
         with open(save_path, 'wb') as f:
             f.write(file_bytes)
 
         await update.message.reply_text("Документ успешно сохранен")
-
     except Exception as e:
         await update.message.reply_text(f"Произошла ошибка: {str(e)}")
+        logger.error(f"Error in handle_document: {e}")
 
-# Функция обработки прикрепленных фото
 
 async def handle_photo(update: Update, context):
     try:
-        # Получаем файл с максимальным разрешением
         photo = update.message.photo[-1]
         file = await photo.get_file()
+        file_bytes = await file.download_as_bytearray()
 
-        # Скачиваем файл
-        file_bytes = await file.download_as_bytes()
-
-        # Сохраняем файл
         file_name = f'photo_{photo.file_id}.jpg'
-        save_path = f'путь/к/папке/{file_name}'
+        save_path = f'dwfiles/{file_name}'
         with open(save_path, 'wb') as f:
             f.write(file_bytes)
 
         await update.message.reply_text("Фотография успешно сохранена")
-
     except Exception as e:
         await update.message.reply_text(f"Произошла ошибка: {str(e)}")
+        logger.error(f"Error in handle_photo: {e}")
 
-# Обработка прикрепленных аудио, видео, голосовых сообщений
 
 async def handle_media(update: Update, context):
     try:
-        # Определяем тип файла
         if update.message.audio:
             media = update.message.audio
+            file_type = "аудио"
         elif update.message.video:
             media = update.message.video
+            file_type = "видео"
         elif update.message.voice:
             media = update.message.voice
+            file_type = "голосовое сообщение"
         else:
             await update.message.reply_text("Неподдерживаемый тип файла")
-        return
+            return
 
-        # Получаем файл
         file = await media.get_file()
-        file_bytes = await file.download_as_bytes()
+        file_bytes = await file.download_as_bytearray()
 
-        # Сохраняем файл
-        file_name = media.file_name or f'{media.file_id}.{media.mime_type.split("/")[-1]}'
-        save_path = f'путь/к/папке/{file_name}'
+        if hasattr(media, 'file_name') and media.file_name:
+            file_name = media.file_name
+        else:
+            extension = media.mime_type.split('/')[-1] if hasattr(media, 'mime_type') else 'bin'
+            file_name = f'{media.file_id}.{extension}'
+
+        save_path = f'dwfiles/{file_name}'
         with open(save_path, 'wb') as f:
             f.write(file_bytes)
 
-        await update.message.reply_text("Медиафайл успешно сохранен")
-
+        await update.message.reply_text(f"{file_type.capitalize()} успешно сохранено")
     except Exception as e:
         await update.message.reply_text(f"Произошла ошибка: {str(e)}")
+        logger.error(f"Error in handle_media: {e}")
+
 
 def read_token_from_file():
     try:
@@ -98,58 +97,49 @@ def read_token_from_file():
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text('Привет! Я твой бот.')
-# Функция для получения информации о боте
+    await update.message.reply_text('Привет! Я твой бот. Отправь мне файл, фото, аудио или видео, и я сохраню его.')
+
+
 async def getme(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        # Получаем информацию о боте
         bot_info = await context.bot.get_me()
 
+        user = update.effective_user
+        chat = update.effective_chat
 
-        # Экранируем все данные
-        user_id = str(update.effective_user.id)
-        first_name = str(update.effective_user.first_name) or ''
-        last_name = str(update.effective_user.last_name) or 'Не указано'
-        username = str(update.effective_user.username) or 'Не указано'
-        chat_id = str(update.effective_chat.id)
-        bot_username = str(bot_info.username) or ''
-        bot_first_name = str(bot_info.first_name) or ''
+        response = (
+            "<b>Информация о пользователе:</b>\n"
+            f"    <b>ID</b>: {user.id}\n"
+            f"    <b>Имя:</b> {user.first_name or ''}\n"
+            f"    <b>Фамилия:</b> {user.last_name or 'Не указано'}\n"
+            f"    <b>Username:</b> @{user.username or 'Не указано'}\n"
+            f"    <b>Is Bot:</b> {user.is_bot}\n\n"
+            "<b>Информация о сообщении:</b>\n"
+            f"    <b>Chat ID:</b> {chat.id}\n"
+            f"    <b>Тип чата:</b> {chat.type}\n"
+            f"    <b>Сообщение ID:</b> {update.message.message_id}\n"
+            f"    <b>Дата отправки:</b> {update.message.date}\n\n"
+            "<b>Информация о боте:</b>\n"
+            f"    <b>Bot ID:</b> {bot_info.id}\n"
+            f"    <b>Bot Username:</b> @{bot_info.username or ''}\n"
+            f"    <b>Bot First Name:</b> {bot_info.first_name or ''}\n"
+            f"    <b>Can Join Groups:</b> {bot_info.can_join_groups}\n"
+            f"    <b>Can Read All Group Messages:</b> {bot_info.can_read_all_group_messages}\n"
+            f"    <b>Is Premium:</b> {bot_info.is_premium}\n"
+        )
 
-        # Формируем ответ с правильным форматированием
-        response = f"<b>Информация о пользователе:</b>\n" \
-                   f"    <b>ID</b>: {user_id}\n" \
-                   f"    <b>Имя:</b> {first_name}\n" \
-                   f"    <b>Фамилия:</b> {last_name}\n" \
-                   f"    <b>Username:</b> {username}\n" \
-                   f"    <b>Is Bot:</b> {update.effective_user.is_bot}\n\n" \
-                   f"<b>Информация о сообщении:</b>\n" \
-                   f"    <b>Chat ID:</b> {chat_id}\n" \
-                   f"    <b>Тип чата:</b> {update.effective_chat.type}\n" \
-                   f"    <b>Сообщение ID:</b> {update.message.message_id}\n" \
-                   f"    <b>Дата отправки:</b> {update.message.date}\n\n" \
-                   f"<b>Информация о боте:</b>\n" \
-                   f"    <b>Bot ID:</b> {bot_info.id}\n" \
-                   f"    <b>Bot Username:</b> {bot_username}\n" \
-                   f"    <b>Bot First Name:</b> {bot_first_name}\n" \
-                   f"    <b>Can Join Groups:</b> {bot_info.can_join_groups}\n" \
-                   f"    <b>Can Read All Group Messages:</b> {bot_info.can_read_all_group_messages}\n" \
-                   f"    <b>Is Premium:</b> {bot_info.is_premium}\n"
-
-        # Проверяем длину сообщения
-        if len(response) > 4096:
-            await update.message.reply_text("Сообщение слишком длинное для отправки")
-            return
-
-        # Проверяем, что сообщение не пустое
-        if not response.strip():
-            await update.message.reply_text("Произошла ошибка: ответ пуст")
-            return
-
-        # Отправляем ответ с правильным экранированием
-        await update.message.reply_text(response, parse_mode=telegram.constants.ParseMode.HTML)
-
+        await update.message.reply_text(response, parse_mode=ParseMode.HTML)
     except Exception as e:
         await update.message.reply_text(f"Произошла ошибка: {str(e)}")
+        logger.error(f"Error in getme: {e}")
+
+
+async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    error = context.error
+    logger.error(f'Update {update} caused error {error}')
+
+    if update and update.message:
+        await update.message.reply_text("Произошла ошибка при обработке сообщения")
 
 
 def main():
@@ -161,16 +151,20 @@ def main():
     try:
         application = Application.builder().token(token).build()
 
-        # Добавляем обработчики
+        # Обработчики команд
         application.add_handler(CommandHandler('start', start))
         application.add_handler(CommandHandler('getme', getme))
-        application.add_handler(MessageHandler(filters.Document, handle_document))
-        application.add_handler(MessageHandler(filters.Photo, handle_photo))
-        application.add_handler(MessageHandler(filters.Audio, handle_media))
-        application.add_handler(MessageHandler(filters.Video, handle_media))
-        application.add_handler(MessageHandler(filters.Voice, handle_media))
 
-        # Запускаем бота
+        # Обработчики медиафайлов
+        application.add_handler(MessageHandler(filters.Document.ALL, handle_document))
+        application.add_handler(MessageHandler(filters.PHOTO, handle_photo))
+        application.add_handler(MessageHandler(filters.AUDIO | filters.VIDEO | filters.VOICE, handle_media))
+
+        # Обработчик ошибок
+        application.add_error_handler(error_handler)
+
+        # Запуск бота
+        logger.info("Бот запускается...")
         application.run_polling()
 
     except Exception as e:
