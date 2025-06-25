@@ -1,0 +1,14 @@
+    with sqlite3.connect('TasksDataBase.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO tasks(
+            from_chat_id,
+            first_name,
+            last_name,
+            object,
+            task_name,
+            created_at
+        ) VALUES (?, ?, ?, ?, ?, ?)
+        ''',(
+
+        ))

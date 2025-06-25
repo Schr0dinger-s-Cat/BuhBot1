@@ -87,6 +87,7 @@ async def handle_media(update: Update, context):
         logger.error(f"Error in handle_media: {e}")
 
 
+
 def read_token_from_file():
     try:
         with open('TOKEN.txt', 'r') as file:
