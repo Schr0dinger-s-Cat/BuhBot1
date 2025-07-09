@@ -4,20 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9fecdf17-8967-4faa-9f2c-1aeefc414896" name="Changes" comment="Added start button for new users">
-      <change afterPath="$PROJECT_DIR$/Backup/BuhBot.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Backup/BuhBut.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Backup/blacknite" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Backup/config.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Handlers.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/instruction.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/itit_func.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/projects.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+    <list default="true" id="9fecdf17-8967-4faa-9f2c-1aeefc414896" name="Changes" comment="Removed trash, code refactoring, new logic">
+      <change afterPath="$PROJECT_DIR$/logger.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Bo1.py" beforeDir="false" afterPath="$PROJECT_DIR$/Bo1.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Handlers.py" beforeDir="false" afterPath="$PROJECT_DIR$/Handlers.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -62,28 +54,28 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.Bo1.executor": "Run",
-    "Python.Bot_ref.executor": "Run",
-    "Python.BuhBot.executor": "Run",
-    "Python.BuhBut.executor": "Run",
-    "Python.Condig.executor": "Run",
-    "Python.Handlers.executor": "Run",
-    "Python.config.executor": "Run",
-    "Python.itit_func.executor": "Run",
-    "Python.main.executor": "Run",
-    "Python.test.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "master",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.Bo1.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Bot_ref.executor&quot;: &quot;Run&quot;,
+    &quot;Python.BuhBot.executor&quot;: &quot;Run&quot;,
+    &quot;Python.BuhBut.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Condig.executor&quot;: &quot;Run&quot;,
+    &quot;Python.Handlers.executor&quot;: &quot;Run&quot;,
+    &quot;Python.config.executor&quot;: &quot;Run&quot;,
+    &quot;Python.itit_func.executor&quot;: &quot;Run&quot;,
+    &quot;Python.main.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\Vsevolod\PycharmProjects\BuhBot1" />
@@ -108,7 +100,10 @@
       <updated>1750160480589</updated>
       <workItem from="1750160482238" duration="6584000" />
       <workItem from="1750232274763" duration="16875000" />
-      <workItem from="1750742779105" duration="40381000" />
+      <workItem from="1750742779105" duration="40827000" />
+      <workItem from="1751016114713" duration="1259000" />
+      <workItem from="1751869120187" duration="39424000" />
+      <workItem from="1752039506728" duration="16221000" />
     </task>
     <task id="LOCAL-00001" summary="V1">
       <option name="closed" value="true" />
@@ -150,13 +145,36 @@
       <option name="project" value="LOCAL" />
       <updated>1750166770577</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Removed trash, code refactoring, new logic">
+      <option name="closed" value="true" />
+      <created>1750865868760</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1750865868761</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
+    <option name="RECENT_FILTERS">
+      <map>
+        <entry key="Branch">
+          <value>
+            <list>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="main" />
+                </option>
+              </RecentGroup>
+            </list>
+          </value>
+        </entry>
+      </map>
+    </option>
     <option name="TAB_STATES">
       <map>
         <entry key="MAIN">
@@ -172,7 +190,8 @@
     <MESSAGE value="Added files download" />
     <MESSAGE value="Repared files download" />
     <MESSAGE value="Added start button for new users" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added start button for new users" />
+    <MESSAGE value="Removed trash, code refactoring, new logic" />
+    <option name="LAST_COMMIT_MESSAGE" value="Removed trash, code refactoring, new logic" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -190,11 +209,11 @@
     <SUITE FILE_PATH="coverage/BuhBot1$Bo1.coverage" NAME="Bo1 Coverage Results" MODIFIED="1750751838262" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/BuhBot1$itit_func.coverage" NAME="itit_func Coverage Results" MODIFIED="1750757544289" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/BuhBot1$test.coverage" NAME="test Coverage Results" MODIFIED="1750836509406" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/BuhBot1$main.coverage" NAME="main Coverage Results" MODIFIED="1750841936567" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/BuhBot1$main.coverage" NAME="main Coverage Results" MODIFIED="1752058363579" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/BuhBot1$config.coverage" NAME="config Coverage Results" MODIFIED="1750236583737" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/BuhBot1$Condig.coverage" NAME="Condig Coverage Results" MODIFIED="1750236316530" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/BuhBot1$BuhBot.coverage" NAME="BuhBot Coverage Results" MODIFIED="1750251789274" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/BuhBot1$Handlers.coverage" NAME="Handlers Coverage Results" MODIFIED="1750841257715" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/BuhBot1$Handlers.coverage" NAME="Handlers Coverage Results" MODIFIED="1752058113313" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/BuhBot1$BuhBut.coverage" NAME="BuhBut Coverage Results" MODIFIED="1750247456982" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
