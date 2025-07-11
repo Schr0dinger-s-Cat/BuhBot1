@@ -7,7 +7,30 @@ import sqlite3
 from typing import Optional, Any
 import logging
 from itit_func import logger
+import asyncio
 
+def get_d_id():
+    # Получение текущего значения файлов
+    if not os.path.exists('DID.txt'):
+        # Создаем файл с default-значением
+        with open('DID.txt', 'w', encoding='utf-8') as file:
+            file.write("0")  # Например, ID по умолчанию = 0
+    # Теперь читаем (гарантировано, что файл существует)
+    with open('DID.txt', 'r', encoding='utf-8') as file:
+        id = int(file.read())
+    return id
+
+def increase_d_id():
+    # Увеличение счётчика файлов
+    if not os.path.exists('DID.txt'):
+        # Создаем файл с default-значением
+        with open('DID.txt', 'w', encoding='utf-8') as file:
+            file.write("0")  # Например, ID по умолчанию = 0
+    # Теперь читаем (гарантировано, что файл существует)
+    with open('DID.txt', 'r', encoding='utf-8') as file:
+        id = int(file.read())
+    with open('DID.txt', 'w', encoding='utf-8') as file:
+        file.write(str(id+1))
 
 def init_database():
     # Инициализация базы данных
@@ -295,7 +318,17 @@ async def fileornot(update, context):
 
 async def confirmation(update, context):
     query = update.callback_query
-    await query.answer('Продолжаем') # Отладка
+    await query.answer('Продолжаем')  # Отладка
+
+    # Удаляем сообщение с логом и кнопкой "Продолжить"
+    try:
+        await context.bot.delete_message(
+            chat_id=query.message.chat.id,
+            message_id=query.message.message_id
+        )
+    except Exception as e:
+        logger.warning(f"Не удалось удалить сообщение 'confirmation': {e}")
+
     db_task_id = context.user_data.get('db_task_id')
     if not db_task_id:
         await context.bot.send_message(
@@ -304,12 +337,10 @@ async def confirmation(update, context):
         )
         return await cancel(update, context)
 
-    # Подключение к БД
     conn = sqlite3.connect('TasksDataBase.db')
     cursor = conn.cursor()
 
     try:
-        # Получение данных из БД
         cursor.execute(
             "SELECT object, task_name, task_description, from_chat_id, created_at, file_ids FROM tasks WHERE id = ?",
             (db_task_id,)
@@ -328,7 +359,6 @@ async def confirmation(update, context):
         user = update.effective_user
         user_link = f'<a href="tg://user?id={user.id}">{user.full_name}</a>'
 
-        # Файлы
         try:
             file_ids = json.loads(file_ids_json)
             doc_ids = file_ids.get('doc_ids', [])
@@ -337,7 +367,6 @@ async def confirmation(update, context):
             doc_ids = []
             photo_ids = []
 
-        # Список оригинальных имён файлов
         original_files = []
         log_path = context.user_data.get('log_path')
         if log_path and os.path.exists(log_path):
@@ -363,7 +392,7 @@ async def confirmation(update, context):
             [InlineKeyboardButton("✅ Подтвердить", callback_data='PUBLISH')],
             [InlineKeyboardButton("❌ Отменить", callback_data=CANCEL)]
         ]
-        await query.message.edit_reply_markup(reply_markup=None)
+
         sent_message = await context.bot.send_message(
             chat_id=update.effective_chat.id,
             text=message_text,
@@ -371,7 +400,7 @@ async def confirmation(update, context):
             parse_mode="HTML",
             disable_web_page_preview=True
         )
-        context.user_data['last_mess_id']=sent_message.id
+        context.user_data['last_mess_id'] = sent_message.message_id
         return SEND
 
     except Exception as e:
@@ -384,6 +413,7 @@ async def confirmation(update, context):
 
     finally:
         conn.close()
+
 
 
 
@@ -500,78 +530,140 @@ async def skip_files(update, context):
             update_column(context.user_data['db_task_id'], 'file_ids', files_json)
             return CONFIRMATION
 
+# Основная функция загрузки файлов
 async def insert_file(update, context, path: str = '/data/bot_uploads'):
-    # Проверка на нажатие кнопок
     if update.callback_query:
         query = update.callback_query
-        query.answer(text=f'Вы выбрали: {query.data}')
-        if query.data == 'SKIP':
-            return CONFIRMATION
-        elif query.data == 'NEXT':
+        await query.answer()
+
+        if query.data == "SKIP":
+            return await skip_files(update, context)
+
+        elif query.data == "NEXT":
             log_path = context.user_data.get('log_path', '[путь не найден]')
-            folder = context.user_data.get('save_dir', '[путь не найден]')
+            folder = context.user_data.get('save_dir', '[папка не найдена]')
             files_json = context.user_data.get('files_json', '{}')
 
             try:
-                log_dict = json.loads(files_json)
+                files_dict = json.loads(files_json)
             except Exception as e:
-                log_dict = {"error": str(e), "raw": files_json}
+                files_dict = {"error": str(e), "raw": files_json}
+
+            # Удаляем сообщение с кнопками "добавить ещё файлы / нет"
             try:
                 await context.bot.delete_message(
-                    chat_id=update.effective_chat.id,
-                    message_id=context.user_data['last_mess_id']
+                    chat_id=query.message.chat.id,
+                    message_id=query.message.message_id
                 )
             except Exception as e:
-                logger.error(f'Ошибка при попытке удаления сообщения: {e}')
+                logger.warning(f"Не удалось удалить сообщение после 'NEXT': {e}")
+
             await query.message.reply_text(
-                text=(
-                    f'✅ Файлы сохранены в папку <code>{folder}</code>\n'
-                    f'Лог: <code>{log_path}</code>\n\n'
-                    f'<b>Информация о файлах:</b>\n<pre>{json.dumps(log_dict, indent=2, ensure_ascii=False)}</pre>'
-                ),
+                text=(f'✅ Файлы сохранены в папку:\n<code>{folder}</code>\n'
+                      f'📄 Лог: <code>{log_path}</code>\n\n'
+                      f'<b>Информация о файлах:</b>\n<pre>{json.dumps(files_dict, indent=2, ensure_ascii=False)}</pre>'),
                 reply_markup=InlineKeyboardMarkup(
-                    [
-                        [InlineKeyboardButton("➡️ Продолжить", callback_data='continue')]
-                    ]
+                    [[InlineKeyboardButton("➡️ Продолжить", callback_data='continue')]]
                 ),
                 parse_mode="HTML"
             )
-              # показать подтверждение
-            update_column(context.user_data['db_task_id'], 'file_ids', files_json)
-            return CONFIRMATION # Ожидание нажатия кнопки
 
-        elif query.data == 'Repeat':
+            update_column(context.user_data['db_task_id'], 'file_ids', files_json)
+            return CONFIRMATION
+
+        elif query.data == "Repeat":
             keyboard = [
                 [InlineKeyboardButton("❌ Не хочу прикреплять файлы", callback_data='SKIP')],
                 [InlineKeyboardButton("🛑 Отмена", callback_data=CANCEL)]
             ]
-            await query.message.edit_reply_markup(reply_markup = None)
+            await query.message.edit_reply_markup(reply_markup=None)
             await query.message.reply_text(
-                text="Отправьте сообщение <b>без текста</b>, прикрепив либо <b>ТОЛЬКО</b> файлы, либо <b>ТОЛЬКО</b> фото, одним сообщением.\n"
-                    "<b>Если нужно прикрепить и файлы, и фото или более 10 файлов/фото — создайте архив и прикрепите его к сообщению.</b>\n"
-                    "В случае, если вы не понимаете этот шаг, обратитесь к инструкции.",
+                text=(
+                    "Отправьте сообщение <b>без текста</b>, прикрепив либо <b>ТОЛЬКО</b> файлы, либо <b>ТОЛЬКО</b> фото, одним сообщением.\n"
+                    "<b>Если нужно прикрепить и файлы, и фото или более 10 — создайте архив и прикрепите его.</b>"
+                ),
                 reply_markup=InlineKeyboardMarkup(keyboard),
                 parse_mode="HTML"
             )
             return INSERTFILE
+
         else:
             return await cancel(update, context)
 
-    # Проверка: сообщение должно содержать только файлы (без текста)
-    if update.message.text or not (update.message.document or update.message.photo):
-        keyboard = [
-            [InlineKeyboardButton("❌ Не хочу прикреплять файлы", callback_data='SKIP')],
-            [InlineKeyboardButton("🛑 Отмена", callback_data=CANCEL)]
-        ]
-        await update.message.edit_reply_markup(reply_markup=None)
-        await update.message.reply_text(
-            text="❌ Отправьте сообщение <b>без текста</b>, но с прикреплёнными файлами.",
-            reply_markup=InlineKeyboardMarkup(keyboard),
-            parse_mode="HTML"
-        )
+    if not update.message:
         return INSERTFILE
 
-    # Обработка файлов
+    if update.message.text:
+        await update.message.reply_text("❗ Пожалуйста, отправьте сообщение <b>без текста</b>, только с вложениями.", parse_mode="HTML")
+        return INSERTFILE
+
+    media_group_id = update.message.media_group_id
+
+    if media_group_id:
+        if 'pending_groups' not in context.user_data:
+            context.user_data['pending_groups'] = {}
+
+        if media_group_id not in context.user_data['pending_groups']:
+            context.user_data['pending_groups'][media_group_id] = {
+                'updates': [],
+                'handled': False
+            }
+
+        context.user_data['pending_groups'][media_group_id]['updates'].append(update)
+
+        if not context.user_data['pending_groups'][media_group_id]['handled']:
+            context.user_data['pending_groups'][media_group_id]['handled'] = True
+            asyncio.create_task(process_group_later(update, context, media_group_id))
+
+        return INSERTFILE
+
+    await process_file(update, context, path=path)
+
+    file_data = context.user_data.get('files_data', {})
+    file_count = file_data.get('file_count', 0)
+
+    keyboard = [
+        [InlineKeyboardButton("✅ Да, хочу добавить ещё файлы", callback_data='Repeat')],
+        [InlineKeyboardButton("❌ Нет, больше файлов нет", callback_data='NEXT')],
+        [InlineKeyboardButton("🛑 Отмена", callback_data=CANCEL)]
+    ]
+
+    sent_message = await update.message.reply_text(
+        text=f"Файлы успешно сохранены. Прикреплено файлов: {file_count}\nХотите добавить ещё файлы?",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+    context.user_data['last_mess_id'] = sent_message.message_id
+
+    return INSERTFILE
+
+
+
+async def process_group_later(update, context, media_group_id):
+    await asyncio.sleep(2.0)  # Ждём завершения загрузки всех частей
+
+    group = context.user_data['pending_groups'].pop(media_group_id, None)
+    if not group:
+        return
+
+    for upd in group['updates']:
+        await process_file(upd, context)
+
+    file_data = context.user_data.get('files_data', {})
+    file_count = file_data.get('file_count', 0)
+
+    keyboard = [
+        [InlineKeyboardButton("✅ Да, хочу добавить ещё файлы", callback_data='Repeat')],
+        [InlineKeyboardButton("❌ Нет, больше файлов нет", callback_data='NEXT')],
+        [InlineKeyboardButton("🛑 Отмена", callback_data=CANCEL)]
+    ]
+
+    await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=f"Файлы успешно сохранены. Прикреплено файлов: {file_count}\nХотите добавить ещё файлы?",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+
+async def process_file(update, context, path: str = '/data/bot_uploads'):
     tid = context.user_data['db_task_id']
     date_folder = datetime.now().strftime("%Y-%m-%d")
     save_dir = os.path.join(path, date_folder, str(tid))
@@ -581,7 +673,6 @@ async def insert_file(update, context, path: str = '/data/bot_uploads'):
     os.makedirs(logs_dir, exist_ok=True)
     log_path = os.path.join(logs_dir, f"{tid}.txt")
 
-    # Инициализация структуры для JSON
     if 'files_data' not in context.user_data:
         context.user_data['files_data'] = {
             "tid": tid,
@@ -592,7 +683,6 @@ async def insert_file(update, context, path: str = '/data/bot_uploads'):
         }
 
     with open(log_path, 'a', encoding='utf-8') as log_file:
-        # Обработка документов
         if update.message.document:
             original_name = update.message.document.file_name
             did = get_d_id()
@@ -600,13 +690,10 @@ async def insert_file(update, context, path: str = '/data/bot_uploads'):
             file = await update.message.document.get_file()
             await file.download_to_drive(os.path.join(save_dir, new_name))
             log_file.write(f"{original_name} -> {new_name}\n")
-
-            # Добавляем информацию о документе
             context.user_data['files_data']['doc_ids'].append(did)
             context.user_data['files_data']['file_count'] += 1
             increase_d_id()
 
-        # Обработка фото
         if update.message.photo:
             photo = update.message.photo[-1]
             original_name = f"photo_{photo.file_unique_id}.jpg"
@@ -615,30 +702,14 @@ async def insert_file(update, context, path: str = '/data/bot_uploads'):
             file = await photo.get_file()
             await file.download_to_drive(os.path.join(save_dir, new_name))
             log_file.write(f"{original_name} -> {new_name}\n")
-
-            # Добавляем информацию о фото
             context.user_data['files_data']['photo_ids'].append(did)
             context.user_data['files_data']['file_count'] += 1
             increase_d_id()
 
-    # Сохраняем пути и JSON в user_data
     context.user_data['save_dir'] = save_dir
     context.user_data['log_path'] = log_path
     context.user_data['files_json'] = json.dumps(context.user_data['files_data'], indent=2)
 
-    # Предлагаем добавить ещё файлы или продолжить
-    keyboard = [
-        [InlineKeyboardButton("✅ Да, хочу добавить ещё файлы", callback_data='Repeat')],
-        [InlineKeyboardButton("❌ Нет, больше файлов нет", callback_data='NEXT')],
-        [InlineKeyboardButton("🛑 Отмена", callback_data=CANCEL)]
-    ]
-    sent_message = await update.message.reply_text(
-        text=f"Файлы успешно сохранены. Прикреплено файлов: {context.user_data['files_data']['file_count']}\n"
-             f"Хотите добавить ещё файлы?",
-        reply_markup=InlineKeyboardMarkup(keyboard)
-    )
-    context.user_data['last_mess_id'] = sent_message.id
-    return INSERTFILE
 
 
 async def send(update, context, chat_id: int = -1002874666761):
@@ -772,29 +843,6 @@ async def send(update, context, chat_id: int = -1002874666761):
         return ConversationHandler.END
     finally:
         conn.close()
-
-def get_d_id():
-    # Получение текущего значения файлов
-    if not os.path.exists('DID.txt'):
-        # Создаем файл с default-значением
-        with open('DID.txt', 'w', encoding='utf-8') as file:
-            file.write("0")  # Например, ID по умолчанию = 0
-    # Теперь читаем (гарантировано, что файл существует)
-    with open('DID.txt', 'r', encoding='utf-8') as file:
-        id = int(file.read())
-    return id
-
-def increase_d_id():
-    # Увеличение счётчика файлов
-    if not os.path.exists('DID.txt'):
-        # Создаем файл с default-значением
-        with open('DID.txt', 'w', encoding='utf-8') as file:
-            file.write("0")  # Например, ID по умолчанию = 0
-    # Теперь читаем (гарантировано, что файл существует)
-    with open('DID.txt', 'r', encoding='utf-8') as file:
-        id = int(file.read())
-    with open('DID.txt', 'w', encoding='utf-8') as file:
-        file.write(str(id+1))
 
 
 
